@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:ph_corona_tracker/models/models.dart';
 import 'package:ph_corona_tracker/models/models.dart';
 import 'package:ph_corona_tracker/models/models.dart';
+import 'package:intl/intl.dart';
 
 void main() => runApp(MyApp());
 
@@ -52,6 +53,9 @@ class _HomePageState extends State<HomePage> {
   String totalRecovered = '';
   String totalDeaths = '';
   Color healthColor = blue;
+  DateTime date;
+  List<String> residents;
+  String tappedString = '';
 
   Future getGrades() async {
     setState(() {
@@ -109,9 +113,18 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
+    List<String> res = [];
+
+    phData.forEach((f) {
+      res.add(f.residentOf);
+    });
+
     setState(() {
       text = newJson.toString();
       loading = false;
+      residents = res.toSet().toList();
+      date = DateTime.now();
+      tappedString = '';
     });
 
     print('oasse');
@@ -147,16 +160,17 @@ class _HomePageState extends State<HomePage> {
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontFamily: poppinsBlack,
+                fontSize: 15,
               ),
             ),
             Text(
-              '${phData.length} Total Cases',
+              '${phData.length == 0 ? 'Loading' : phData.length} ${phData.length == 0 ? '' : ' Total Cases'}',
               style: TextStyle(
                 color: Color(0xffFFD057),
                 fontFamily: poppinsBold,
                 fontSize: 15.0,
               ),
-            )
+            ),
           ],
         ),
         backgroundColor: Colors.black,
@@ -168,50 +182,38 @@ class _HomePageState extends State<HomePage> {
             )
           : Column(
               children: <Widget>[
-                Container(
-                  margin: EdgeInsets.symmetric(
-                    horizontal: 10.0,
-                    vertical: 5.0,
-                  ),
-                  child: TextField(
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontFamily: poppinsBold,
-                    ),
-                    decoration: InputDecoration(
-                      suffixIcon: GestureDetector(
-                        child: Icon(
-                          Icons.backspace,
-                          color: Colors.white,
-                        ),
-                      ),
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: Colors.white,
-                      ),
-                      hintText: 'Search here...',
-                      hintStyle: TextStyle(
-                        color: Colors.white,
-                        fontFamily: poppinsBold,
-                      ),
-                      filled: true,
-                      fillColor: Colors.black,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5),
-                        borderSide: BorderSide(
-                          width: 0,
-                          style: BorderStyle.solid,
-                          color: red,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
                 Expanded(
                   child: Container(
                     child: ListView(
                       physics: BouncingScrollPhysics(),
                       children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10.0,
+                            vertical: 5,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                'As of',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20.0,
+                                  fontFamily: poppinsRegular,
+                                ),
+                              ),
+                              Text(
+                                '${DateFormat('yMMMMd').add_jm().format(date)}',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontFamily: poppinsRegular,
+                                  fontSize: 25.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         Container(
                           margin: EdgeInsets.symmetric(
                             horizontal: 10.0,
@@ -335,138 +337,79 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ],
                         ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10.0,
+                            vertical: 5,
+                          ),
+                          child: Text(
+                            'Residents Of',
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          height: 50,
+                          width: double.infinity,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: residents.length,
+                            itemBuilder: (context, i) {
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    tappedString = residents[i];
+                                  });
+                                  print(tappedString);
+                                },
+                                child: Container(
+                                  margin: EdgeInsets.all(5),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 10.0,
+                                    vertical: 2.0,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: blue,
+                                    borderRadius: BorderRadius.circular(50),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black26,
+                                        blurRadius: 5.0,
+                                      )
+                                    ],
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '${residents[i]}',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontFamily: poppinsBold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: List.generate(
                             phData.length,
                             (i) {
-                              return Container(
-                                margin: EdgeInsets.symmetric(
-                                  horizontal: 10.0,
-                                  vertical: 5.0,
-                                ),
-                                padding: EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Color(0xff000000),
-                                  borderRadius: BorderRadius.circular(5),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      blurRadius: 5.0,
-                                      color: Colors.black26,
-                                    )
-                                  ],
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: <Widget>[
-                                        Text(
-                                          '#${phData[i].caseNo} ${phData[i].nationality == null ? 'NOT SPECIFIED' : phData[i].nationality}',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 25.0,
-                                            fontFamily: poppinsBold,
-                                            color: Color(0xffE4E4E4),
-                                          ),
-                                        ),
-                                        Text(
-                                          '${phData[i].age} yrs',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 20.0,
-                                            fontFamily: poppinsBold,
-                                            color: Color(0xffFFF9C0),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Row(
-                                      children: <Widget>[
-                                        DataContent(
-                                          type: 'Sex',
-                                          typeColor: blue,
-                                          typeSize: 12,
-                                          data: phData[i].sex,
-                                          dataSize: 15,
-                                          dataColor: Color(0xffFF5C00),
-                                        ),
-                                        DataContent(
-                                          type: 'Transpo',
-                                          typeColor: blue,
-                                          typeSize: 12,
-                                          data: phData[i].transType,
-                                          dataSize: 15,
-                                          dataColor: Color(0xffC9C0FF),
-                                        ),
-                                      ],
-                                    ),
-                                    Row(
-                                      children: <Widget>[
-                                        DataContent(
-                                          type: 'Currently At',
-                                          typeColor: blue,
-                                          typeSize: 12,
-                                          data:
-                                              phData[i].currentlyAt.trim() == ""
-                                                  ? 'Not Specified'
-                                                  : phData[i].currentlyAt,
-                                          dataSize: 15,
-                                          dataColor: Colors.white,
-                                        ),
-                                      ],
-                                    ),
-                                    Row(
-                                      children: <Widget>[
-                                        DataContent(
-                                          type: 'Health Status',
-                                          typeColor: blue,
-                                          typeSize: 12,
-                                          data: phData[i].healthStatus == ""
-                                              ? 'NONE'
-                                              : phData[i].healthStatus,
-                                          dataSize: 15,
-                                          dataColor: Color(0xffC0FFC7),
-                                        ),
-                                        DataContent(
-                                          type: 'Case Status',
-                                          typeColor: blue,
-                                          typeSize: 12,
-                                          data: phData[i].caseStatus,
-                                          dataSize: 15,
-                                          dataColor:
-                                              phData[i].caseStatus == 'Deceased'
-                                                  ? Color(0xffFFC0C0)
-                                                  : Color(0xff90E4FF),
-                                        ),
-                                      ],
-                                    ),
-                                    Row(
-                                      children: <Widget>[
-                                        DataContent(
-                                          type: 'Date',
-                                          typeColor: blue,
-                                          typeSize: 12,
-                                          data: phData[i].dtStamp,
-                                          dataSize: 15,
-                                          dataColor: Colors.amber,
-                                        ),
-                                        DataContent(
-                                          type: 'Resident Of',
-                                          typeColor: blue,
-                                          typeSize: 12,
-                                          data: phData[i].residentOf,
-                                          dataSize: 15,
-                                          dataColor: Colors.white,
-                                        ),
-                                      ],
-                                    )
-                                    // Text('Symptoms: ${phData[i].symptoms}'),
-                                  ],
-                                ),
-                              );
+                              if (tappedString == phData[i].residentOf) {
+                                print(true);
+                                return DataWidget(
+                                  phData: phData[i],
+                                );
+                              }
+                              if (tappedString.length == 0) {
+                                return DataWidget(
+                                  phData: phData[i],
+                                );
+                              }
+                              return Container();
                             },
                           ),
                         ),
@@ -477,6 +420,139 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
     );
+  }
+}
+
+class DataWidget extends StatelessWidget {
+  final PhilippineData phData;
+
+  DataWidget({this.phData});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.symmetric(
+        horizontal: 10.0,
+        vertical: 5.0,
+      ),
+      padding: EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Color(0xff000000),
+        borderRadius: BorderRadius.circular(5),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 5.0,
+            color: Colors.black26,
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                '#${phData.caseNo} ${phData.nationality == null ? 'NOT SPECIFIED' : phData.nationality}',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 25.0,
+                  fontFamily: poppinsBold,
+                  color: Color(0xffE4E4E4),
+                ),
+              ),
+              Text(
+                '${phData.age} yrs',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20.0,
+                  fontFamily: poppinsBold,
+                  color: Color(0xffFFF9C0),
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: <Widget>[
+              DataContent(
+                type: 'Sex',
+                typeColor: blue,
+                typeSize: 12,
+                data: phData.sex,
+                dataSize: 15,
+                dataColor: Color(0xffFF5C00),
+              ),
+              DataContent(
+                type: 'Transpo',
+                typeColor: blue,
+                typeSize: 12,
+                data: phData.transType,
+                dataSize: 15,
+                dataColor: Color(0xffC9C0FF),
+              ),
+            ],
+          ),
+          Row(
+            children: <Widget>[
+              DataContent(
+                type: 'Currently At',
+                typeColor: blue,
+                typeSize: 12,
+                data: phData.currentlyAt.trim() == ""
+                    ? 'Not Specified'
+                    : phData.currentlyAt,
+                dataSize: 15,
+                dataColor: Colors.white,
+              ),
+            ],
+          ),
+          Row(
+            children: <Widget>[
+              DataContent(
+                type: 'Health Status',
+                typeColor: blue,
+                typeSize: 12,
+                data: phData.healthStatus == "" ? 'NONE' : phData.healthStatus,
+                dataSize: 15,
+                dataColor: Color(0xffC0FFC7),
+              ),
+              DataContent(
+                type: 'Case Status',
+                typeColor: blue,
+                typeSize: 12,
+                data: phData.caseStatus,
+                dataSize: 15,
+                dataColor: phData.caseStatus == 'Deceased'
+                    ? Color(0xffFFC0C0)
+                    : Color(0xff90E4FF),
+              ),
+            ],
+          ),
+          Row(
+            children: <Widget>[
+              DataContent(
+                type: 'Date',
+                typeColor: blue,
+                typeSize: 12,
+                data: phData.dtStamp,
+                dataSize: 15,
+                dataColor: Colors.amber,
+              ),
+              DataContent(
+                type: 'Resident Of',
+                typeColor: blue,
+                typeSize: 12,
+                data: phData.residentOf,
+                dataSize: 15,
+                dataColor: Colors.white,
+              ),
+            ],
+          )
+          // Text('Symptoms: ${phData[i].symptoms}'),
+        ],
+      ),
+    );
+    ;
   }
 }
 
