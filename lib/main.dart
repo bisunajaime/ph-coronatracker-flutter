@@ -1,0 +1,549 @@
+import 'dart:convert';
+
+import 'package:csv/csv.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:html/dom.dart' as dom;
+import 'package:html/parser.dart';
+import 'package:http/http.dart' as http;
+import 'package:ph_corona_tracker/models/models.dart';
+import 'package:ph_corona_tracker/models/models.dart';
+import 'package:ph_corona_tracker/models/models.dart';
+
+void main() => runApp(MyApp());
+
+final Color red = Color(0xffe53e3e);
+final Color bg = Color(0xfff7f7f7);
+final Color green = Color(0xff48bb78);
+final Color blue = Color(0xff2c5282);
+final String poppinsBlack = 'Poppins-Black';
+final String poppinsBold = 'Poppins-Bold';
+final String poppinsRegular = 'Poppins-Regular';
+
+class MyApp extends StatelessWidget {
+  // This widget is the root of your application.
+  @override
+  Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+    ]);
+    return MaterialApp(
+      title: 'PH Corona Tracker',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  String text = 'Data';
+  List<List<dynamic>> data;
+  List<PhilippineData> phData = [];
+  bool loading = false;
+  String totalConfirmed = '';
+  String totalRecovered = '';
+  String totalDeaths = '';
+  Color healthColor = blue;
+
+  Future getGrades() async {
+    setState(() {
+      phData.clear();
+      loading = true;
+    });
+    http.Client client = http.Client();
+    http.Response response = await client.get('https://covid19ph.com/');
+    var body = response.body;
+    var phmainlist = parse(response.body);
+    List<dom.Element> elements =
+        phmainlist.getElementsByTagName('phmainlist-comp');
+    var data = elements.length;
+
+    print('pass here');
+
+    List<dom.Element> totalCases = phmainlist.querySelectorAll(
+        'body .container .grid .col-span-6 .rounded .px-10 p');
+    List<dom.Element> results =
+        phmainlist.querySelectorAll('.py-3:nth-child(1)');
+    //print(results);
+    setState(() {
+      totalConfirmed = totalCases[0].innerHtml;
+      totalDeaths = totalCases[1].innerHtml;
+      totalRecovered = totalCases[2].innerHtml;
+    });
+    var jsonData = jsonEncode(elements[0]
+        .attributes
+        .toString()
+        .replaceFirst("{:phcases:", '')
+        .replaceRange(
+            elements[0]
+                    .attributes
+                    .toString()
+                    .replaceFirst("{:phcases:", '')
+                    .length -
+                1,
+            elements[0]
+                .attributes
+                .toString()
+                .replaceFirst("{:phcases:", '')
+                .length,
+            ''));
+
+    var newJson = jsonDecode(jsonDecode(jsonData));
+
+    PhilippineData p = PhilippineData.fromJson(newJson[1]);
+
+    for (int i = 0; i < newJson.length; i++) {
+      if (newJson[i]['nationality'] != '?' &&
+          newJson[i]['nationality'].trim().length != 0) {
+        setState(() {
+          phData.add(PhilippineData.fromJson(newJson[i]));
+        });
+      }
+    }
+
+    setState(() {
+      text = newJson.toString();
+      loading = false;
+    });
+
+    print('oasse');
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getGrades();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Color(0xff272727),
+      floatingActionButton: loading
+          ? null
+          : FloatingActionButton(
+              onPressed: getGrades,
+              child: Icon(
+                Icons.refresh,
+                color: Colors.white,
+              ),
+              backgroundColor: red,
+            ),
+      appBar: AppBar(
+        title: Column(
+          children: <Widget>[
+            Text(
+              'PH Corona Info',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontFamily: poppinsBlack,
+              ),
+            ),
+            Text(
+              '${phData.length} Total Cases',
+              style: TextStyle(
+                color: Color(0xffFFD057),
+                fontFamily: poppinsBold,
+                fontSize: 15.0,
+              ),
+            )
+          ],
+        ),
+        backgroundColor: Colors.black,
+        centerTitle: true,
+      ),
+      body: loading
+          ? Center(
+              child: CircularProgressIndicator(),
+            )
+          : Column(
+              children: <Widget>[
+                Container(
+                  margin: EdgeInsets.symmetric(
+                    horizontal: 10.0,
+                    vertical: 5.0,
+                  ),
+                  child: TextField(
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: poppinsBold,
+                    ),
+                    decoration: InputDecoration(
+                      suffixIcon: GestureDetector(
+                        child: Icon(
+                          Icons.backspace,
+                          color: Colors.white,
+                        ),
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Colors.white,
+                      ),
+                      hintText: 'Search here...',
+                      hintStyle: TextStyle(
+                        color: Colors.white,
+                        fontFamily: poppinsBold,
+                      ),
+                      filled: true,
+                      fillColor: Colors.black,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(5),
+                        borderSide: BorderSide(
+                          width: 0,
+                          style: BorderStyle.solid,
+                          color: red,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    child: ListView(
+                      physics: BouncingScrollPhysics(),
+                      children: <Widget>[
+                        Container(
+                          margin: EdgeInsets.symmetric(
+                            horizontal: 10.0,
+                            vertical: 5.0,
+                          ),
+                          padding: EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5),
+                            color: Colors.black,
+                            boxShadow: [
+                              BoxShadow(
+                                blurRadius: 5.0,
+                                color: Colors.black26,
+                              )
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              Text(
+                                '$totalConfirmed',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Color(0xffDA8CFF),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 30,
+                                  fontFamily: poppinsBlack,
+                                ),
+                              ),
+                              Text(
+                                'Confirmed',
+                                style: TextStyle(
+                                  fontFamily: poppinsBold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: Container(
+                                margin: EdgeInsets.only(
+                                  left: 10,
+                                  top: 5,
+                                  right: 5,
+                                  bottom: 5,
+                                ),
+                                padding: EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(5),
+                                  color: Colors.black,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      blurRadius: 5.0,
+                                      color: Colors.black26,
+                                    )
+                                  ],
+                                ),
+                                child: Column(
+                                  children: <Widget>[
+                                    Text(
+                                      '$totalDeaths',
+                                      style: TextStyle(
+                                        fontFamily: poppinsBlack,
+                                        fontSize: 30.0,
+                                        color: red,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Deaths',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontFamily: poppinsBold,
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Container(
+                                margin: EdgeInsets.only(
+                                  left: 5,
+                                  top: 5,
+                                  right: 10,
+                                  bottom: 5,
+                                ),
+                                padding: EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(5),
+                                  color: Colors.black,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      blurRadius: 10.0,
+                                      color: Colors.black26,
+                                    )
+                                  ],
+                                ),
+                                child: Column(
+                                  children: <Widget>[
+                                    Text(
+                                      '$totalRecovered',
+                                      style: TextStyle(
+                                        fontFamily: poppinsBlack,
+                                        fontSize: 30.0,
+                                        color: green,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Recovered',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontFamily: poppinsBold,
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: List.generate(
+                            phData.length,
+                            (i) {
+                              return Container(
+                                margin: EdgeInsets.symmetric(
+                                  horizontal: 10.0,
+                                  vertical: 5.0,
+                                ),
+                                padding: EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Color(0xff000000),
+                                  borderRadius: BorderRadius.circular(5),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      blurRadius: 5.0,
+                                      color: Colors.black26,
+                                    )
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: <Widget>[
+                                        Text(
+                                          '#${phData[i].caseNo} ${phData[i].nationality == null ? 'NOT SPECIFIED' : phData[i].nationality}',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 25.0,
+                                            fontFamily: poppinsBold,
+                                            color: Color(0xffE4E4E4),
+                                          ),
+                                        ),
+                                        Text(
+                                          '${phData[i].age} yrs',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 20.0,
+                                            fontFamily: poppinsBold,
+                                            color: Color(0xffFFF9C0),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      children: <Widget>[
+                                        DataContent(
+                                          type: 'Sex',
+                                          typeColor: blue,
+                                          typeSize: 12,
+                                          data: phData[i].sex,
+                                          dataSize: 15,
+                                          dataColor: Color(0xffFF5C00),
+                                        ),
+                                        DataContent(
+                                          type: 'Transpo',
+                                          typeColor: blue,
+                                          typeSize: 12,
+                                          data: phData[i].transType,
+                                          dataSize: 15,
+                                          dataColor: Color(0xffC9C0FF),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      children: <Widget>[
+                                        DataContent(
+                                          type: 'Currently At',
+                                          typeColor: blue,
+                                          typeSize: 12,
+                                          data:
+                                              phData[i].currentlyAt.trim() == ""
+                                                  ? 'Not Specified'
+                                                  : phData[i].currentlyAt,
+                                          dataSize: 15,
+                                          dataColor: Colors.white,
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      children: <Widget>[
+                                        DataContent(
+                                          type: 'Health Status',
+                                          typeColor: blue,
+                                          typeSize: 12,
+                                          data: phData[i].healthStatus == ""
+                                              ? 'NONE'
+                                              : phData[i].healthStatus,
+                                          dataSize: 15,
+                                          dataColor: Color(0xffC0FFC7),
+                                        ),
+                                        DataContent(
+                                          type: 'Case Status',
+                                          typeColor: blue,
+                                          typeSize: 12,
+                                          data: phData[i].caseStatus,
+                                          dataSize: 15,
+                                          dataColor:
+                                              phData[i].caseStatus == 'Deceased'
+                                                  ? Color(0xffFFC0C0)
+                                                  : Color(0xff90E4FF),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      children: <Widget>[
+                                        DataContent(
+                                          type: 'Date',
+                                          typeColor: blue,
+                                          typeSize: 12,
+                                          data: phData[i].dtStamp,
+                                          dataSize: 15,
+                                          dataColor: Colors.amber,
+                                        ),
+                                        DataContent(
+                                          type: 'Resident Of',
+                                          typeColor: blue,
+                                          typeSize: 12,
+                                          data: phData[i].residentOf,
+                                          dataSize: 15,
+                                          dataColor: Colors.white,
+                                        ),
+                                      ],
+                                    )
+                                    // Text('Symptoms: ${phData[i].symptoms}'),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+class DataContent extends StatelessWidget {
+  final String data;
+  final String type;
+  final double dataSize;
+  final double typeSize;
+  final Color dataColor;
+  final Color typeColor;
+
+  DataContent({
+    this.data,
+    this.type,
+    this.dataSize,
+    this.typeSize,
+    this.dataColor,
+    this.typeColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        margin: EdgeInsets.symmetric(
+          vertical: 5,
+          horizontal: 5,
+        ),
+        padding: EdgeInsets.symmetric(
+          horizontal: 10.0,
+          vertical: 5,
+        ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(5),
+          color: Color(0xff1D1D1D),
+          boxShadow: [
+            BoxShadow(
+              blurRadius: 5.0,
+              color: Colors.black54,
+            )
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Text(
+              type,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: poppinsRegular,
+                color: Colors.white70,
+                fontSize: typeSize,
+              ),
+            ),
+            Text(
+              data,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: poppinsBold,
+                color: dataColor,
+                fontSize: dataSize,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
