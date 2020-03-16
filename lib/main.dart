@@ -181,39 +181,40 @@ class _HomePageState extends State<HomePage> {
               child: CircularProgressIndicator(),
             )
           : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10.0,
+                    vertical: 5,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        'Results as of',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15.0,
+                          fontFamily: poppinsRegular,
+                        ),
+                      ),
+                      Text(
+                        '${DateFormat('yMMMMd').add_jm().format(date)}',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontFamily: poppinsRegular,
+                          fontSize: 20.0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 Expanded(
                   child: Container(
                     child: ListView(
                       physics: BouncingScrollPhysics(),
                       children: <Widget>[
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10.0,
-                            vertical: 5,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text(
-                                'As of',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20.0,
-                                  fontFamily: poppinsRegular,
-                                ),
-                              ),
-                              Text(
-                                '${DateFormat('yMMMMd').add_jm().format(date)}',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontFamily: poppinsRegular,
-                                  fontSize: 25.0,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                         Container(
                           margin: EdgeInsets.symmetric(
                             horizontal: 10.0,
@@ -346,6 +347,7 @@ class _HomePageState extends State<HomePage> {
                             'Residents Of',
                             style: TextStyle(
                               color: Colors.white,
+                              fontFamily: poppinsRegular,
                             ),
                           ),
                         ),
@@ -395,23 +397,86 @@ class _HomePageState extends State<HomePage> {
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: List.generate(
-                            phData.length,
-                            (i) {
-                              if (tappedString == phData[i].residentOf) {
-                                print(true);
-                                return DataWidget(
-                                  phData: phData[i],
-                                );
-                              }
-                              if (tappedString.length == 0) {
-                                return DataWidget(
-                                  phData: phData[i],
-                                );
-                              }
-                              return Container();
-                            },
-                          ),
+                          children: <Widget>[
+                            tappedString.length == 0
+                                ? Container()
+                                : Container(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10.0,
+                                        vertical: 5.0,
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: <Widget>[
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: <Widget>[
+                                              Text(
+                                                'Showing results for : ',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontFamily: poppinsRegular,
+                                                  fontSize: 15.0,
+                                                ),
+                                              ),
+                                              GestureDetector(
+                                                onTap: () {
+                                                  setState(() {
+                                                    tappedString = '';
+                                                  });
+                                                },
+                                                child: Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: 10.0,
+                                                    vertical: 5.0,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            50),
+                                                    color: Colors.white70,
+                                                  ),
+                                                  child: Text('Clear'),
+                                                ),
+                                              )
+                                            ],
+                                          ),
+                                          Text(
+                                            '$tappedString',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontFamily: poppinsRegular,
+                                              fontSize: 20.0,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: List.generate(
+                                phData.length,
+                                (i) {
+                                  if (tappedString == phData[i].residentOf) {
+                                    print(true);
+                                    return DataWidget(
+                                      phData: phData[i],
+                                    );
+                                  }
+                                  if (tappedString.length == 0) {
+                                    return DataWidget(
+                                      phData: phData[i],
+                                    );
+                                  }
+                                  return Container();
+                                },
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
