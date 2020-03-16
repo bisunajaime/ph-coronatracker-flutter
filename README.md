@@ -1,1 +1,1 @@
-# Philippine Based Corona Tracker app made with flutter
+# Philippine Based Corona Tracker
