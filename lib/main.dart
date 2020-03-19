@@ -355,6 +355,7 @@ class _HomePageState extends State<HomePage> {
                           height: 50,
                           width: double.infinity,
                           child: ListView.builder(
+                            physics: BouncingScrollPhysics(),
                             scrollDirection: Axis.horizontal,
                             itemCount: residents.length,
                             itemBuilder: (context, i) {
@@ -434,12 +435,18 @@ class _HomePageState extends State<HomePage> {
                                                     vertical: 5.0,
                                                   ),
                                                   decoration: BoxDecoration(
-                                                    borderRadius:
+                                                    borderRadius: 
                                                         BorderRadius.circular(
                                                             50),
                                                     color: Colors.white70,
                                                   ),
-                                                  child: Text('Clear'),
+                                                  child: Text(
+                                                    'Clear',
+                                                    style: TextStyle(
+                                                      fontFamily:
+                                                          poppinsRegular,
+                                                    ),
+                                                  ),
                                                 ),
                                               )
                                             ],
